@@ -14,3 +14,148 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns the authenticated user's profile including voice_id and curriculum
+ * @summary Get current user profile
+ */
+export const GetMeResponse = zod.object({
+  id: zod.number(),
+  clerkUserId: zod.string(),
+  email: zod.string(),
+  voiceId: zod.string().nullable(),
+  hasVoice: zod.boolean(),
+  curriculum: zod.union([
+    zod.object({
+      id: zod.number(),
+      language: zod.string(),
+      level: zod.string(),
+      goal: zod.string(),
+      days: zod.array(
+        zod.object({
+          day: zod.number(),
+          title: zod.string(),
+          phrases: zod.array(zod.string()),
+          scenario: zod.string(),
+          task: zod.string(),
+        }),
+      ),
+    }),
+    zod.null(),
+  ]),
+  createdAt: zod.string(),
+});
+
+/**
+ * Updates the user's ElevenLabs voice_id
+ * @summary Update user voice ID
+ */
+export const UpdateUserVoiceBody = zod.object({
+  voiceId: zod.string(),
+});
+
+export const UpdateUserVoiceResponse = zod.object({
+  id: zod.number(),
+  clerkUserId: zod.string(),
+  email: zod.string(),
+  voiceId: zod.string().nullable(),
+  hasVoice: zod.boolean(),
+  curriculum: zod.union([
+    zod.object({
+      id: zod.number(),
+      language: zod.string(),
+      level: zod.string(),
+      goal: zod.string(),
+      days: zod.array(
+        zod.object({
+          day: zod.number(),
+          title: zod.string(),
+          phrases: zod.array(zod.string()),
+          scenario: zod.string(),
+          task: zod.string(),
+        }),
+      ),
+    }),
+    zod.null(),
+  ]),
+  createdAt: zod.string(),
+});
+
+/**
+ * Accepts an audio file and creates a cloned voice via ElevenLabs
+ * @summary Clone user voice
+ */
+export const CloneVoiceBody = zod.object({
+  audio: zod.instanceof(File),
+});
+
+export const CloneVoiceResponse = zod.object({
+  voiceId: zod.string(),
+  message: zod.string(),
+});
+
+/**
+ * Uses AI to generate a structured 7-day learning curriculum
+ * @summary Generate a 7-day language curriculum
+ */
+export const GenerateCurriculumBody = zod.object({
+  language: zod.string(),
+  level: zod.string(),
+  goal: zod.string(),
+});
+
+export const GenerateCurriculumResponse = zod.object({
+  curriculum: zod.object({
+    id: zod.number(),
+    language: zod.string(),
+    level: zod.string(),
+    goal: zod.string(),
+    days: zod.array(
+      zod.object({
+        day: zod.number(),
+        title: zod.string(),
+        phrases: zod.array(zod.string()),
+        scenario: zod.string(),
+        task: zod.string(),
+      }),
+    ),
+  }),
+});
+
+/**
+ * Accepts audio, transcribes it, generates AI response, returns audio in user's cloned voice
+ * @summary Send audio message in practice session
+ */
+export const SendConversationMessageBody = zod.object({
+  audio: zod.instanceof(File),
+  day: zod.number().describe("Lesson day number (1-7)"),
+  language: zod.string().describe("Target language"),
+  scenario: zod.string().optional().describe("Lesson scenario context"),
+});
+
+export const SendConversationMessageResponse = zod.object({
+  text: zod.string().describe("AI text response"),
+  audio: zod.string().describe("Base64 encoded audio"),
+  transcript: zod.string().describe("Transcription of user's audio"),
+});
+
+/**
+ * Analyzes user text and provides corrections
+ * @summary Get language feedback
+ */
+export const GetFeedbackBody = zod.object({
+  userText: zod.string(),
+  expectedPhrases: zod.array(zod.string()),
+  language: zod.string(),
+});
+
+export const GetFeedbackResponse = zod.object({
+  corrections: zod.array(
+    zod.object({
+      original: zod.string(),
+      corrected: zod.string(),
+      explanation: zod.string(),
+    }),
+  ),
+  improvedSentence: zod.string(),
+});

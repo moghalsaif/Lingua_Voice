@@ -8,3 +8,93 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface CurriculumDay {
+  day: number;
+  title: string;
+  phrases: string[];
+  scenario: string;
+  task: string;
+}
+
+export interface CurriculumData {
+  id: number;
+  language: string;
+  level: string;
+  goal: string;
+  days: CurriculumDay[];
+}
+
+export interface UserProfile {
+  id: number;
+  clerkUserId: string;
+  email: string;
+  /** @nullable */
+  voiceId: string | null;
+  hasVoice: boolean;
+  curriculum: CurriculumData | null;
+  createdAt: string;
+}
+
+export interface UpdateVoiceBody {
+  voiceId: string;
+}
+
+export interface CloneVoiceResponse {
+  voiceId: string;
+  message: string;
+}
+
+export interface GenerateCurriculumBody {
+  language: string;
+  level: string;
+  goal: string;
+}
+
+export interface CurriculumResponse {
+  curriculum: CurriculumData;
+}
+
+export interface ConversationResponse {
+  /** AI text response */
+  text: string;
+  /** Base64 encoded audio */
+  audio: string;
+  /** Transcription of user's audio */
+  transcript: string;
+}
+
+export interface FeedbackCorrection {
+  original: string;
+  corrected: string;
+  explanation: string;
+}
+
+export interface FeedbackResponse {
+  corrections: FeedbackCorrection[];
+  improvedSentence: string;
+}
+
+export interface GetFeedbackBody {
+  userText: string;
+  expectedPhrases: string[];
+  language: string;
+}
+
+export type CloneVoiceBody = {
+  audio: Blob;
+};
+
+export type SendConversationMessageBody = {
+  audio: Blob;
+  /** Lesson day number (1-7) */
+  day: number;
+  /** Target language */
+  language: string;
+  /** Lesson scenario context */
+  scenario?: string;
+};

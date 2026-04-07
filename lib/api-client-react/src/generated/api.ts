@@ -5,18 +5,34 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  CloneVoiceBody,
+  CloneVoiceResponse,
+  ConversationResponse,
+  CurriculumResponse,
+  ErrorResponse,
+  FeedbackResponse,
+  GenerateCurriculumBody,
+  GetFeedbackBody,
+  HealthStatus,
+  SendConversationMessageBody,
+  UpdateVoiceBody,
+  UserProfile,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +115,512 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Returns the authenticated user's profile including voice_id and curriculum
+ * @summary Get current user profile
+ */
+export const getGetMeUrl = () => {
+  return `/api/users/me`;
+};
+
+export const getMe = async (options?: RequestInit): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getGetMeUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMeQueryKey = () => {
+  return [`/api/users/me`] as const;
+};
+
+export const getGetMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMe>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMe>>> = ({
+    signal,
+  }) => getMe({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMe>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMeQueryResult = NonNullable<Awaited<ReturnType<typeof getMe>>>;
+export type GetMeQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get current user profile
+ */
+
+export function useGetMe<
+  TData = Awaited<ReturnType<typeof getMe>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMeQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Updates the user's ElevenLabs voice_id
+ * @summary Update user voice ID
+ */
+export const getUpdateUserVoiceUrl = () => {
+  return `/api/users/me/voice`;
+};
+
+export const updateUserVoice = async (
+  updateVoiceBody: UpdateVoiceBody,
+  options?: RequestInit,
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getUpdateUserVoiceUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateVoiceBody),
+  });
+};
+
+export const getUpdateUserVoiceMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserVoice>>,
+    TError,
+    { data: BodyType<UpdateVoiceBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateUserVoice>>,
+  TError,
+  { data: BodyType<UpdateVoiceBody> },
+  TContext
+> => {
+  const mutationKey = ["updateUserVoice"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateUserVoice>>,
+    { data: BodyType<UpdateVoiceBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateUserVoice(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUserVoiceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUserVoice>>
+>;
+export type UpdateUserVoiceMutationBody = BodyType<UpdateVoiceBody>;
+export type UpdateUserVoiceMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update user voice ID
+ */
+export const useUpdateUserVoice = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserVoice>>,
+    TError,
+    { data: BodyType<UpdateVoiceBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateUserVoice>>,
+  TError,
+  { data: BodyType<UpdateVoiceBody> },
+  TContext
+> => {
+  return useMutation(getUpdateUserVoiceMutationOptions(options));
+};
+
+/**
+ * Accepts an audio file and creates a cloned voice via ElevenLabs
+ * @summary Clone user voice
+ */
+export const getCloneVoiceUrl = () => {
+  return `/api/voice/clone`;
+};
+
+export const cloneVoice = async (
+  cloneVoiceBody: CloneVoiceBody,
+  options?: RequestInit,
+): Promise<CloneVoiceResponse> => {
+  const formData = new FormData();
+  formData.append(`audio`, cloneVoiceBody.audio);
+
+  return customFetch<CloneVoiceResponse>(getCloneVoiceUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const getCloneVoiceMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cloneVoice>>,
+    TError,
+    { data: BodyType<CloneVoiceBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cloneVoice>>,
+  TError,
+  { data: BodyType<CloneVoiceBody> },
+  TContext
+> => {
+  const mutationKey = ["cloneVoice"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cloneVoice>>,
+    { data: BodyType<CloneVoiceBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return cloneVoice(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CloneVoiceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cloneVoice>>
+>;
+export type CloneVoiceMutationBody = BodyType<CloneVoiceBody>;
+export type CloneVoiceMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Clone user voice
+ */
+export const useCloneVoice = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cloneVoice>>,
+    TError,
+    { data: BodyType<CloneVoiceBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cloneVoice>>,
+  TError,
+  { data: BodyType<CloneVoiceBody> },
+  TContext
+> => {
+  return useMutation(getCloneVoiceMutationOptions(options));
+};
+
+/**
+ * Uses AI to generate a structured 7-day learning curriculum
+ * @summary Generate a 7-day language curriculum
+ */
+export const getGenerateCurriculumUrl = () => {
+  return `/api/curriculum`;
+};
+
+export const generateCurriculum = async (
+  generateCurriculumBody: GenerateCurriculumBody,
+  options?: RequestInit,
+): Promise<CurriculumResponse> => {
+  return customFetch<CurriculumResponse>(getGenerateCurriculumUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateCurriculumBody),
+  });
+};
+
+export const getGenerateCurriculumMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateCurriculum>>,
+    TError,
+    { data: BodyType<GenerateCurriculumBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateCurriculum>>,
+  TError,
+  { data: BodyType<GenerateCurriculumBody> },
+  TContext
+> => {
+  const mutationKey = ["generateCurriculum"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateCurriculum>>,
+    { data: BodyType<GenerateCurriculumBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateCurriculum(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateCurriculumMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateCurriculum>>
+>;
+export type GenerateCurriculumMutationBody = BodyType<GenerateCurriculumBody>;
+export type GenerateCurriculumMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Generate a 7-day language curriculum
+ */
+export const useGenerateCurriculum = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateCurriculum>>,
+    TError,
+    { data: BodyType<GenerateCurriculumBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateCurriculum>>,
+  TError,
+  { data: BodyType<GenerateCurriculumBody> },
+  TContext
+> => {
+  return useMutation(getGenerateCurriculumMutationOptions(options));
+};
+
+/**
+ * Accepts audio, transcribes it, generates AI response, returns audio in user's cloned voice
+ * @summary Send audio message in practice session
+ */
+export const getSendConversationMessageUrl = () => {
+  return `/api/conversation`;
+};
+
+export const sendConversationMessage = async (
+  sendConversationMessageBody: SendConversationMessageBody,
+  options?: RequestInit,
+): Promise<ConversationResponse> => {
+  const formData = new FormData();
+  formData.append(`audio`, sendConversationMessageBody.audio);
+  formData.append(`day`, sendConversationMessageBody.day.toString());
+  formData.append(`language`, sendConversationMessageBody.language);
+  if (sendConversationMessageBody.scenario !== undefined) {
+    formData.append(`scenario`, sendConversationMessageBody.scenario);
+  }
+
+  return customFetch<ConversationResponse>(getSendConversationMessageUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const getSendConversationMessageMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendConversationMessage>>,
+    TError,
+    { data: BodyType<SendConversationMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendConversationMessage>>,
+  TError,
+  { data: BodyType<SendConversationMessageBody> },
+  TContext
+> => {
+  const mutationKey = ["sendConversationMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendConversationMessage>>,
+    { data: BodyType<SendConversationMessageBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendConversationMessage(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendConversationMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendConversationMessage>>
+>;
+export type SendConversationMessageMutationBody =
+  BodyType<SendConversationMessageBody>;
+export type SendConversationMessageMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Send audio message in practice session
+ */
+export const useSendConversationMessage = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendConversationMessage>>,
+    TError,
+    { data: BodyType<SendConversationMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendConversationMessage>>,
+  TError,
+  { data: BodyType<SendConversationMessageBody> },
+  TContext
+> => {
+  return useMutation(getSendConversationMessageMutationOptions(options));
+};
+
+/**
+ * Analyzes user text and provides corrections
+ * @summary Get language feedback
+ */
+export const getGetFeedbackUrl = () => {
+  return `/api/feedback`;
+};
+
+export const getFeedback = async (
+  getFeedbackBody: GetFeedbackBody,
+  options?: RequestInit,
+): Promise<FeedbackResponse> => {
+  return customFetch<FeedbackResponse>(getGetFeedbackUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(getFeedbackBody),
+  });
+};
+
+export const getGetFeedbackMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof getFeedback>>,
+    TError,
+    { data: BodyType<GetFeedbackBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof getFeedback>>,
+  TError,
+  { data: BodyType<GetFeedbackBody> },
+  TContext
+> => {
+  const mutationKey = ["getFeedback"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof getFeedback>>,
+    { data: BodyType<GetFeedbackBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return getFeedback(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GetFeedbackMutationResult = NonNullable<
+  Awaited<ReturnType<typeof getFeedback>>
+>;
+export type GetFeedbackMutationBody = BodyType<GetFeedbackBody>;
+export type GetFeedbackMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get language feedback
+ */
+export const useGetFeedback = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof getFeedback>>,
+    TError,
+    { data: BodyType<GetFeedbackBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof getFeedback>>,
+  TError,
+  { data: BodyType<GetFeedbackBody> },
+  TContext
+> => {
+  return useMutation(getGetFeedbackMutationOptions(options));
+};

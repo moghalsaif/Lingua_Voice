@@ -10,6 +10,16 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User profile operations
+  - name: voice
+    description: Voice cloning operations
+  - name: curriculum
+    description: Curriculum generation operations
+  - name: conversation
+    description: Practice conversation operations
+  - name: feedback
+    description: Language feedback operations
 paths:
   /healthz:
     get:
@@ -24,6 +34,186 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      description: Returns the authenticated user's profile including voice_id and curriculum
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/me/voice:
+    put:
+      operationId: updateUserVoice
+      tags: [users]
+      summary: Update user voice ID
+      description: Updates the user's ElevenLabs voice_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVoiceBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /voice/clone:
+    post:
+      operationId: cloneVoice
+      tags: [voice]
+      summary: Clone user voice
+      description: Accepts an audio file and creates a cloned voice via ElevenLabs
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                audio:
+                  type: string
+                  format: binary
+              required:
+                - audio
+      responses:
+        "200":
+          description: Voice cloned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloneVoiceResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /curriculum:
+    post:
+      operationId: generateCurriculum
+      tags: [curriculum]
+      summary: Generate a 7-day language curriculum
+      description: Uses AI to generate a structured 7-day learning curriculum
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateCurriculumBody"
+      responses:
+        "200":
+          description: Curriculum generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurriculumResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /conversation:
+    post:
+      operationId: sendConversationMessage
+      tags: [conversation]
+      summary: Send audio message in practice session
+      description: Accepts audio, transcribes it, generates AI response, returns audio in user's cloned voice
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                day:
+                  type: integer
+                  description: Lesson day number (1-7)
+                language:
+                  type: string
+                  description: Target language
+                scenario:
+                  type: string
+                  description: Lesson scenario context
+              required:
+                - audio
+                - day
+                - language
+      responses:
+        "200":
+          description: AI response with audio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /feedback:
+    post:
+      operationId: getFeedback
+      tags: [feedback]
+      summary: Get language feedback
+      description: Analyzes user text and provides corrections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetFeedbackBody"
+      responses:
+        "200":
+          description: Language feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +224,183 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: string
+        email:
+          type: string
+        voiceId:
+          type: ["string", "null"]
+        hasVoice:
+          type: boolean
+        curriculum:
+          oneOf:
+            - $ref: "#/components/schemas/CurriculumData"
+            - type: "null"
+        createdAt:
+          type: string
+      required:
+        - id
+        - clerkUserId
+        - email
+        - voiceId
+        - hasVoice
+        - curriculum
+        - createdAt
+
+    UpdateVoiceBody:
+      type: object
+      properties:
+        voiceId:
+          type: string
+      required:
+        - voiceId
+
+    CloneVoiceResponse:
+      type: object
+      properties:
+        voiceId:
+          type: string
+        message:
+          type: string
+      required:
+        - voiceId
+        - message
+
+    CurriculumDay:
+      type: object
+      properties:
+        day:
+          type: integer
+        title:
+          type: string
+        phrases:
+          type: array
+          items:
+            type: string
+        scenario:
+          type: string
+        task:
+          type: string
+      required:
+        - day
+        - title
+        - phrases
+        - scenario
+        - task
+
+    CurriculumData:
+      type: object
+      properties:
+        id:
+          type: integer
+        language:
+          type: string
+        level:
+          type: string
+        goal:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/CurriculumDay"
+      required:
+        - id
+        - language
+        - level
+        - goal
+        - days
+
+    GenerateCurriculumBody:
+      type: object
+      properties:
+        language:
+          type: string
+        level:
+          type: string
+        goal:
+          type: string
+      required:
+        - language
+        - level
+        - goal
+
+    CurriculumResponse:
+      type: object
+      properties:
+        curriculum:
+          $ref: "#/components/schemas/CurriculumData"
+      required:
+        - curriculum
+
+    ConversationResponse:
+      type: object
+      properties:
+        text:
+          type: string
+          description: AI text response
+        audio:
+          type: string
+          description: Base64 encoded audio
+        transcript:
+          type: string
+          description: Transcription of user's audio
+      required:
+        - text
+        - audio
+        - transcript
+
+    FeedbackCorrection:
+      type: object
+      properties:
+        original:
+          type: string
+        corrected:
+          type: string
+        explanation:
+          type: string
+      required:
+        - original
+        - corrected
+        - explanation
+
+    FeedbackResponse:
+      type: object
+      properties:
+        corrections:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedbackCorrection"
+        improvedSentence:
+          type: string
+      required:
+        - corrections
+        - improvedSentence
+
+    GetFeedbackBody:
+      type: object
+      properties:
+        userText:
+          type: string
+        expectedPhrases:
+          type: array
+          items:
+            type: string
+        language:
+          type: string
+      required:
+        - userText
+        - expectedPhrases
+        - language

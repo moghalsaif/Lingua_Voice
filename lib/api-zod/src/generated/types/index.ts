@@ -6,4 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./cloneVoiceBody";
+export * from "./cloneVoiceResponse";
+export * from "./conversationResponse";
+export * from "./curriculumData";
+export * from "./curriculumDay";
+export * from "./curriculumResponse";
+export * from "./errorResponse";
+export * from "./feedbackCorrection";
+export * from "./feedbackResponse";
+export * from "./generateCurriculumBody";
+export * from "./getFeedbackBody";
 export * from "./healthStatus";
+export * from "./sendConversationMessageBody";
+export * from "./updateVoiceBody";
+export * from "./userProfile";
