@@ -30,7 +30,32 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : [];
+
+app.use(
+  cors({
+    credentials: true,
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      const isAllowed =
+        allowedOrigins.some((o) => origin === o || origin.endsWith(`.${o.replace(/^https?:\/\//, "")}`)) ||
+        /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+        (process.env.REPLIT_DEV_DOMAIN !== undefined && origin.includes(process.env.REPLIT_DEV_DOMAIN)) ||
+        (process.env.REPLIT_DOMAINS !== undefined &&
+          process.env.REPLIT_DOMAINS.split(",").some((d) => origin.endsWith(d.trim())));
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin '${origin}' not allowed`));
+      }
+    },
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

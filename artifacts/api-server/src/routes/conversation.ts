@@ -1,11 +1,31 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import OpenAI from "openai";
+import { z } from "zod";
 import { requireAuth, getOrCreateUser } from "../lib/auth";
 import type { Request } from "express";
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
+
+const ConversationFieldsSchema = z.object({
+  day: z.coerce.number().int().min(1).max(7),
+  language: z.string().min(1).max(100),
+  scenario: z.string().max(500).optional(),
+});
+
+const ALLOWED_AUDIO_MIMETYPES = [
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/wave",
+  "audio/x-wav",
+  "audio/webm",
+  "audio/ogg",
+  "audio/flac",
+  "audio/m4a",
+  "audio/mp4",
+];
 
 router.post("/conversation", requireAuth, upload.single("audio"), async (req: Request, res): Promise<void> => {
   const clerkUserId = (req as Request & { clerkUserId: string }).clerkUserId;
@@ -15,14 +35,19 @@ router.post("/conversation", requireAuth, upload.single("audio"), async (req: Re
     return;
   }
 
-  const day = parseInt(req.body.day as string, 10);
-  const language = req.body.language as string;
-  const scenario = req.body.scenario as string | undefined;
-
-  if (!language || isNaN(day)) {
-    res.status(400).json({ error: "Missing required fields: day and language" });
+  if (!ALLOWED_AUDIO_MIMETYPES.includes(req.file.mimetype)) {
+    res.status(400).json({ error: "Invalid audio file type" });
     return;
   }
+
+  const parsed = ConversationFieldsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    req.log.warn({ errors: parsed.error.message }, "Invalid conversation request body");
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { day, language, scenario } = parsed.data;
 
   const openaiKey = process.env.OPENAI_API_KEY;
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
