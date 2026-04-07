@@ -1,0 +1,8 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'>
+  <rect width='192' height='192' rx='38.400000000000006' fill='#0c0f1a'/>
+  <circle cx='96' cy='96' r='67.19999999999999' fill='#7c3aed'/>
+  <rect x='82.56' y='48' width='26.880000000000003' height='57.599999999999994' rx='13.440000000000001' fill='white'/>
+  <path d='M67.19999999999999 99.84 Q67.19999999999999 130.56 96 130.56 Q124.80000000000001 130.56 124.80000000000001 99.84' stroke='white' stroke-width='7.68' fill='none'/>
+  <line x1='96' y1='130.56' x2='96' y2='144' stroke='white' stroke-width='7.68'/>
+  <line x1='76.80000000000001' y1='144' x2='115.19999999999999' y2='144' stroke='white' stroke-width='7.68'/>
+</svg>
