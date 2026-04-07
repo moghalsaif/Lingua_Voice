@@ -1,0 +1,176 @@
+Build a production-ready web app (PWA) using Next.js (App Router) and Node.js API routes for a voice-based language learning app.
+
+Core idea:
+Users upload their voice, create a cloned voice using ElevenLabs, and practice speaking a new language with an AI that responds in their own voice.
+
+Tech requirements:
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- API routes inside Next.js
+- Replit-compatible setup
+- Mobile-first responsive UI
+- PWA support (installable)
+
+Environment variables:
+- ELEVENLABS_API_KEY
+- OPENAI_API_KEY (or compatible LLM)
+
+---
+
+FEATURES TO BUILD:
+
+1. AUTH (simple)
+- Email-based login (no OAuth needed for now)
+- Store user in simple DB (can use in-memory or JSON file for MVP)
+
+---
+
+2. VOICE CLONING
+
+Frontend:
+- Page: /onboarding
+- Allow user to upload audio (mp3/wav)
+- Show upload progress
+
+Backend:
+- POST /api/voice/clone
+- Accept audio file
+- Send to ElevenLabs voice cloning API
+- Return voice_id
+- Store voice_id with user
+
+---
+
+3. CURRICULUM GENERATION
+
+Backend:
+- POST /api/curriculum
+- Input: language, level, goal
+- Use LLM to generate a 7-day curriculum
+
+Format:
+[
+  {
+    day: 1,
+    title: "Ordering Coffee",
+    phrases: [],
+    scenario: "",
+    task: ""
+  }
+]
+
+Frontend:
+- Dashboard page showing 7-day plan
+- Button: "Start Lesson"
+
+---
+
+4. PRACTICE SESSION (CORE FEATURE)
+
+Frontend:
+- Page: /practice/[day]
+- Big mic button
+- Record audio using MediaRecorder
+- Show live transcript
+- Play AI response audio
+
+Backend:
+- POST /api/conversation
+
+Flow:
+1. Receive audio
+2. Convert speech to text (ElevenLabs or Whisper)
+3. Send text + lesson context to LLM
+4. Generate response
+5. Convert response to speech using ElevenLabs with user's voice_id
+6. Return:
+   - text response
+   - audio URL or buffer
+
+---
+
+5. FEEDBACK SYSTEM
+
+Backend:
+- POST /api/feedback
+
+Input:
+- user_text
+- expected_phrases
+
+Output:
+- 1–2 corrections
+- improved sentence
+
+Frontend:
+- Show feedback below conversation
+
+---
+
+6. UI REQUIREMENTS
+
+- Clean, minimal UI
+- Mobile-first
+- Dark mode default
+- Pages:
+  - /onboarding
+  - /dashboard
+  - /practice/[day]
+
+---
+
+7. PWA SETUP
+
+- Add manifest.json
+- Enable installable app
+- Fullscreen mobile experience
+
+---
+
+8. DATA STRUCTURE
+
+User:
+- id
+- email
+- voice_id
+
+Curriculum:
+- user_id
+- days[]
+
+Session:
+- user_id
+- day
+- messages[]
+
+---
+
+9. AUDIO HANDLING
+
+- Use browser MediaRecorder
+- Send audio as blob
+- Backend processes and returns audio response
+
+---
+
+10. IMPORTANT CONSTRAINTS
+
+- Keep responses short (1–2 sentences)
+- Optimize for low latency
+- Do not overcomplicate UI
+- Everything should work end-to-end
+
+---
+
+OUTPUT EXPECTATION:
+
+- Fully working Next.js app
+- API routes implemented
+- Basic UI complete
+- Ready to run on Replit
+
+After building, provide:
+1. Instructions to run
+2. Where to add API keys
+3. How to test voice cloning and conversation
