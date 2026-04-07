@@ -73,7 +73,7 @@ router.post("/conversation", requireAuth, upload.single("audio"), async (req: Re
   });
 
   const transcript = transcription.text;
-  req.log.info({ transcript }, "Audio transcribed");
+  req.log.info({ transcriptLength: transcript.length }, "Audio transcribed");
 
   const systemPrompt = scenario
     ? `You are a friendly ${language} language tutor helping a student practice. The scenario is: ${scenario}. 
@@ -94,7 +94,7 @@ router.post("/conversation", requireAuth, upload.single("audio"), async (req: Re
   });
 
   const aiText = completion.choices[0]?.message?.content ?? "Great job! Keep practicing.";
-  req.log.info({ aiText }, "AI response generated");
+  req.log.info({ aiTextLength: aiText.length }, "AI response generated");
 
   let audioBase64 = "";
 
