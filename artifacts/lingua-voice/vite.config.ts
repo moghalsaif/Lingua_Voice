@@ -47,7 +47,7 @@ export default defineConfig({
         description: "Voice-based language learning with AI",
         theme_color: "#7c3aed",
         background_color: "#0c0f1a",
-        display: "standalone",
+        display: "fullscreen",
         start_url: "/",
         icons: [
           {
