@@ -49,7 +49,7 @@ function PhraseRow({ phrase }: { phrase: string }) {
     try {
       const res = await customFetch<{ audio: string }>("/api/voice/speak", {
         method: "POST",
-        body: JSON.stringify({ text: phrase, useClonedVoice: false }),
+        body: JSON.stringify({ text: phrase, useClonedVoice: true }),
         headers: { "Content-Type": "application/json" },
       });
       setAudio(res.audio);
