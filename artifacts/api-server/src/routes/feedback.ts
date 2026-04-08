@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
-import OpenAI from "openai";
 import { requireAuth } from "../lib/auth";
 import { GetFeedbackBody } from "@workspace/api-zod";
+import { openrouter } from "@workspace/integrations-openrouter-ai";
 import type { Request } from "express";
 
 const router: IRouter = Router();
@@ -16,9 +16,7 @@ router.post("/feedback", requireAuth, async (req: Request, res): Promise<void> =
 
   const { userText, expectedPhrases, language } = parsed.data;
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  req.log.info({ language, userText }, "Generating language feedback");
+  req.log.info({ language }, "Generating language feedback");
 
   const prompt = expectedPhrases.length > 0
     ? `A student learning ${language} said: "${userText}"
@@ -48,8 +46,9 @@ router.post("/feedback", requireAuth, async (req: Request, res): Promise<void> =
          "improvedSentence": "a natural, correct version of the sentence"
        }`;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const completion = await openrouter.chat.completions.create({
+    model: "openai/gpt-4o-mini",
+    max_tokens: 8192,
     messages: [
       {
         role: "system",
@@ -57,7 +56,6 @@ router.post("/feedback", requireAuth, async (req: Request, res): Promise<void> =
       },
       { role: "user", content: prompt },
     ],
-    max_tokens: 300,
     temperature: 0.3,
   });
 
@@ -65,9 +63,10 @@ router.post("/feedback", requireAuth, async (req: Request, res): Promise<void> =
 
   let feedbackData: { corrections: Array<{ original: string; corrected: string; explanation: string }>; improvedSentence: string };
   try {
-    feedbackData = JSON.parse(content);
+    const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    feedbackData = JSON.parse(cleaned);
   } catch {
-    req.log.error({ content }, "Failed to parse feedback JSON");
+    req.log.error("Failed to parse feedback JSON");
     feedbackData = {
       corrections: [],
       improvedSentence: userText,

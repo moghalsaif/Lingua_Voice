@@ -3,6 +3,7 @@ import multer from "multer";
 import OpenAI from "openai";
 import { z } from "zod";
 import { requireAuth, getOrCreateUser } from "../lib/auth";
+import { openrouter } from "@workspace/integrations-openrouter-ai";
 import type { Request } from "express";
 
 const router: IRouter = Router();
@@ -53,15 +54,15 @@ router.post("/conversation", requireAuth, upload.single("audio"), async (req: Re
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
 
   if (!openaiKey) {
-    res.status(500).json({ error: "OpenAI API key not configured" });
+    res.status(500).json({ error: "OpenAI API key not configured (required for audio transcription)" });
     return;
   }
 
   const user = await getOrCreateUser(clerkUserId);
-  const openai = new OpenAI({ apiKey: openaiKey });
 
   req.log.info({ day, language }, "Processing conversation message");
 
+  const openai = new OpenAI({ apiKey: openaiKey });
   const arrayBuffer = req.file.buffer.buffer.slice(req.file.buffer.byteOffset, req.file.buffer.byteOffset + req.file.buffer.byteLength) as ArrayBuffer;
   const audioFile = new File([arrayBuffer], req.file.originalname || "audio.webm", {
     type: req.file.mimetype || "audio/webm",
@@ -83,13 +84,13 @@ router.post("/conversation", requireAuth, upload.single("audio"), async (req: Re
        Respond naturally in ${language} (keep it simple for learners).
        Keep your response to 1-2 sentences only. Be encouraging and conversational.`;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const completion = await openrouter.chat.completions.create({
+    model: "openai/gpt-4o-mini",
+    max_tokens: 8192,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: transcript },
     ],
-    max_tokens: 150,
     temperature: 0.8,
   });
 

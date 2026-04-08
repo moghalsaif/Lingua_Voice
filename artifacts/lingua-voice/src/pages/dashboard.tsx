@@ -8,12 +8,34 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Mic, BookOpen, ChevronRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const LANGUAGES = [
+  "Spanish",
+  "French",
+  "German",
+  "Italian",
+  "Portuguese",
+  "Japanese",
+  "Mandarin Chinese",
+  "Korean",
+  "Arabic",
+  "Russian",
+  "Dutch",
+  "Swedish",
+  "Polish",
+  "Turkish",
+  "Hindi",
+  "Vietnamese",
+  "Thai",
+  "Greek",
+  "Hebrew",
+  "Indonesian",
+];
 
 const formSchema = z.object({
   language: z.string().min(1, "Language is required"),
@@ -104,9 +126,20 @@ export default function Dashboard() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Target Language</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. Spanish, Japanese, French" data-testid="input-language" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-language">
+                                <SelectValue placeholder="Select a language" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {LANGUAGES.map((lang) => (
+                                <SelectItem key={lang} value={lang}>
+                                  {lang}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -141,7 +174,7 @@ export default function Dashboard() {
                       <FormItem>
                         <FormLabel>Learning Goal</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <Textarea
                             placeholder="e.g. I want to be able to order food in a restaurant and have basic conversations for my upcoming trip to Tokyo."
                             className="resize-none h-24"
                             data-testid="input-goal"
@@ -152,8 +185,8 @@ export default function Dashboard() {
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={generateCurriculum.isPending}
                     data-testid="button-generate-curriculum"
                   >
@@ -188,8 +221,8 @@ export default function Dashboard() {
                     <p className="text-sm text-muted-foreground">{day.task}</p>
                   </CardContent>
                   <CardFooter>
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       variant={day.day === 1 ? "default" : "secondary"}
                       disabled={!hasVoice}
                       onClick={() => setLocation(`/practice/${day.day}`)}

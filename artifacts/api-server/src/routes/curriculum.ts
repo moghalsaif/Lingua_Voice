@@ -1,9 +1,9 @@
 import { Router, type IRouter } from "express";
-import OpenAI from "openai";
 import { eq } from "drizzle-orm";
 import { db, curriculaTable } from "@workspace/db";
 import { requireAuth, getOrCreateUser } from "../lib/auth";
 import { GenerateCurriculumBody } from "@workspace/api-zod";
+import { openrouter } from "@workspace/integrations-openrouter-ai";
 import type { Request } from "express";
 
 const router: IRouter = Router();
@@ -23,10 +23,9 @@ router.post("/curriculum", requireAuth, async (req: Request, res): Promise<void>
 
   req.log.info({ language, level, goal }, "Generating curriculum");
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const completion = await openrouter.chat.completions.create({
+    model: "openai/gpt-4o-mini",
+    max_tokens: 8192,
     messages: [
       {
         role: "system",
@@ -51,16 +50,16 @@ router.post("/curriculum", requireAuth, async (req: Request, res): Promise<void>
       },
     ],
     temperature: 0.7,
-    max_tokens: 2000,
   });
 
   const content = completion.choices[0]?.message?.content ?? "";
 
   let days;
   try {
-    days = JSON.parse(content);
+    const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    days = JSON.parse(cleaned);
   } catch {
-    req.log.error({ content }, "Failed to parse curriculum JSON");
+    req.log.error("Failed to parse curriculum JSON");
     res.status(500).json({ error: "Failed to generate curriculum" });
     return;
   }
