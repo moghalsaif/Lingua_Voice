@@ -66,7 +66,9 @@ router.post("/curriculum", requireAuth, async (req: Request, res): Promise<void>
 
   const existingCurricula = await db.select().from(curriculaTable).where(eq(curriculaTable.userId, user.id));
   if (existingCurricula.length > 0) {
-    await db.delete(curriculaTable).where(eq(curriculaTable.userId, user.id));
+    req.log.warn({ userId: user.id }, "Attempt to create second curriculum in demo mode");
+    res.status(403).json({ error: "Demo limit reached: you can only create one curriculum.", code: "ONE_CURRICULUM_LIMIT" });
+    return;
   }
 
   const [curriculum] = await db.insert(curriculaTable).values({

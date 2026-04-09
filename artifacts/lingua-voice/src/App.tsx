@@ -3,9 +3,10 @@ import { ClerkProvider, Show, useAuth, useClerk } from "@clerk/react";
 import { Switch, Route, Redirect, useLocation, Router as WouterRouter } from "wouter";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { setAuthTokenGetter, useGetMe } from "@workspace/api-client-react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Mic2, Users } from "lucide-react";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import Home from "@/pages/home";
@@ -30,6 +31,59 @@ if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
+function PlatformAtCapacity() {
+  return (
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+          <Users className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight">Demo Capacity Reached</h1>
+          <p className="text-muted-foreground">
+            This demo is limited to <strong className="text-foreground">20 users</strong>. All spots have been filled.
+          </p>
+          <p className="text-sm text-muted-foreground pt-2">
+            Thank you for your interest in Lingua Voice. Please check back later for the full launch.
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground border border-border/40 rounded-lg px-4 py-3 bg-muted/20">
+          <Mic2 className="h-3.5 w-3.5 text-primary" />
+          <span>Lingua Voice — Voice-based language learning</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isCapacityError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { status?: number; data?: unknown };
+  if (e.status === 503) return true;
+  const data = e.data;
+  if (data && typeof data === "object" && (data as { code?: string }).code === "PLATFORM_CAPACITY_REACHED") return true;
+  return false;
+}
+
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const { error } = useGetMe();
+
+  if (isCapacityError(error)) {
+    return <PlatformAtCapacity />;
+  }
+
+  return (
+    <>
+      <Show when="signed-in">
+        <Component />
+      </Show>
+      <Show when="signed-out">
+        <Redirect to="/sign-in" />
+      </Show>
+    </>
+  );
+}
+
 function HomeRedirect() {
   return (
     <>
@@ -38,19 +92,6 @@ function HomeRedirect() {
       </Show>
       <Show when="signed-out">
         <Home />
-      </Show>
-    </>
-  );
-}
-
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  return (
-    <>
-      <Show when="signed-in">
-        <Component />
-      </Show>
-      <Show when="signed-out">
-        <Redirect to="/sign-in" />
       </Show>
     </>
   );
@@ -109,7 +150,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/" component={HomeRedirect} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
-            
+
             <Route path="/dashboard">
               {() => <ProtectedRoute component={Dashboard} />}
             </Route>
@@ -119,7 +160,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/practice/:day">
               {() => <ProtectedRoute component={Practice} />}
             </Route>
-            
+
             <Route component={NotFound} />
           </Switch>
         </AppLayout>

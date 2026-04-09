@@ -1,6 +1,7 @@
 import { useUser, useClerk } from "@clerk/react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Mic2, LogOut, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -16,6 +17,9 @@ export function Navbar() {
             <Mic2 className="h-5 w-5" />
           </div>
           <span className="font-bold tracking-tight">Lingua Voice</span>
+          <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 border-primary/40 text-primary/70 font-medium uppercase tracking-wider">
+            Demo
+          </Badge>
         </Link>
 
         <div className="flex items-center gap-4">
