@@ -2,7 +2,7 @@ import { useUser, useClerk } from "@clerk/react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic2, LogOut, User as UserIcon } from "lucide-react";
+import { Mic2, LogOut, User as UserIcon, Home } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Navbar() {
@@ -25,6 +25,12 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           {isLoaded && isSignedIn && user ? (
             <div className="flex items-center gap-4">
+              <Button asChild variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
+                <Link href="/dashboard">
+                  <Home className="h-4 w-4" />
+                  <span className="hidden sm:inline">Home</span>
+                </Link>
+              </Button>
               <div className="hidden md:flex flex-col items-end text-sm">
                 <span className="font-medium leading-none">{user.fullName || user.emailAddresses[0]?.emailAddress}</span>
                 <span className="text-xs text-muted-foreground">Student</span>
