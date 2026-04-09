@@ -2,6 +2,11 @@
 
 A voice-based language learning PWA where you clone your own voice and practice speaking a target language with an AI tutor that listens, corrects, and responds back in your own cloned voice.
 
+## Demo
+
+[Watch the demo on YouTube](https://youtu.be/8qhR6WWt31E)
+
+
 ## What it does
 
 - **Voice cloning** — Record a sample and ElevenLabs clones your voice
